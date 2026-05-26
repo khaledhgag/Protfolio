@@ -138,14 +138,7 @@ export default function AdminLoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>
-              Demo credentials: <br />
-              Email: <code className="text-primary">admin@example.com</code>
-              <br />
-              Password: <code className="text-primary">admin123</code>
-            </p>
-          </div>
+          
         </CardContent>
       </Card>
     </div>

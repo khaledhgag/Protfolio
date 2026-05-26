@@ -118,9 +118,7 @@ export function Footer() {
           <p>
             &copy; {currentYear} Khaled Abuelenein. All rights reserved.
           </p>
-          <p className="flex items-center gap-1">
-            Built with <Heart className="size-4 text-red-500" fill="currentColor" /> using Next.js & Tailwind
-          </p>
+         
         </motion.div>
       </div>
     </footer>
