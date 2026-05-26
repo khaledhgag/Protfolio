@@ -100,19 +100,47 @@ export default function NewProjectPage() {
     setValue("images", newImages);
   };
 
-  const onSubmit = async (data: ProjectInput) => {
-    setIsSubmitting(true);
-    try {
-      // In production, this would be an API call
-      console.log("Project data:", { ...data, techStack, images });
-      toast.success("Project created successfully!");
-      router.push("/admin/projects");
-    } catch {
-      toast.error("Failed to create project");
-    } finally {
-      setIsSubmitting(false);
+const onSubmit = async (data: ProjectInput) => {
+  setIsSubmitting(true);
+
+  try {
+    const res = await fetch("/api/projects", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: data.title,
+        shortDescription: data.description, // مهم
+        longDescription: data.longDescription,
+        category: data.category,
+        technologies: techStack, // مهم
+        screenshots: images, // لو API مستني screenshots
+        githubUrl: data.githubUrl,
+        liveUrl: data.liveUrl,
+        featured: data.featured,
+        published: data.published,
+      }),
+    });
+
+    const result = await res.json();
+
+    console.log(result); // شوف بيرجع ايه
+
+    if (!res.ok) {
+      throw new Error(result.error || "Failed to create project");
     }
-  };
+
+    toast.success("Project created successfully!");
+    router.push("/admin/projects");
+    router.refresh();
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to create project");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="space-y-6">

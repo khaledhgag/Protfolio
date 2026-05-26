@@ -63,19 +63,35 @@ export default function SettingsPage() {
     setKeywords(keywords.filter((k) => k !== keyword));
   };
 
-  const onSubmit = async (data: SettingsInput) => {
-    setIsSaving(true);
-    try {
-      // In production, this would be an API call
-      console.log("Settings data:", { ...data, siteKeywords: keywords });
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("Settings saved successfully!");
-    } catch {
-      toast.error("Failed to save settings");
-    } finally {
-      setIsSaving(false);
+const onSubmit = async (data: SettingsInput) => {
+  setIsSaving(true);
+
+  try {
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...data,
+        siteKeywords: keywords,
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(result.error || "Failed to save");
     }
-  };
+
+    toast.success("Settings saved successfully!");
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to save settings");
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   return (
     <div className="space-y-6">

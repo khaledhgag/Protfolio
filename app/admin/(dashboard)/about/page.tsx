@@ -55,20 +55,33 @@ export default function AboutPage() {
     }
   };
 
-  const onSubmit = async (data: AboutInput) => {
-    setIsSaving(true);
-    try {
-      // In production, this would be an API call
-      console.log("About data:", data);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("About information saved successfully!");
-    } catch {
-      toast.error("Failed to save information");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+const onSubmit = async (data: AboutInput) => {
+  setIsSaving(true);
 
+  try {
+    const response = await fetch("/api/about", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...data,
+        profileImage,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to save");
+    }
+
+    toast.success("About information saved successfully!");
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to save information");
+  } finally {
+    setIsSaving(false);
+  }
+};
   return (
     <div className="space-y-6">
       {/* Header */}
