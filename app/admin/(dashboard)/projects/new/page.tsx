@@ -79,20 +79,41 @@ export default function NewProjectPage() {
     setValue("techStack", newTechStack);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+ const handleImageUpload = async (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  const files = e.target.files;
+  if (!files) return;
 
-    // In production, this would upload to Cloudinary
-    // For now, we'll use placeholder URLs
-    const newImages = Array.from(files).map(
-      (_, i) => `/images/project-${images.length + i + 1}.jpg`
-    );
-    const updatedImages = [...images, ...newImages];
+  try {
+    const uploadedUrls: string[] = [];
+
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        uploadedUrls.push(data.url);
+      }
+    }
+
+    const updatedImages = [...images, ...uploadedUrls];
     setImages(updatedImages);
     setValue("images", updatedImages);
-    toast.success("Images added (demo mode - configure Cloudinary for real uploads)");
-  };
+
+    toast.success("Images uploaded successfully");
+  } catch (error) {
+    console.error(error);
+    toast.error("Upload failed");
+  }
+};
 
   const removeImage = (index: number) => {
     const newImages = images.filter((_, i) => i !== index);

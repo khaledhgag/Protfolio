@@ -46,14 +46,36 @@ export default function AboutPage() {
     defaultValues,
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // In production, upload to Cloudinary
-      setProfileImage(URL.createObjectURL(file));
-      toast.success("Image selected (configure Cloudinary for real uploads)");
+const handleImageUpload = async (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "profile");
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error);
     }
-  };
+
+    setProfileImage(data.url);
+
+    toast.success("Profile image uploaded successfully");
+  } catch (error) {
+    console.error(error);
+    toast.error("Upload failed");
+  }
+};
 
 const onSubmit = async (data: AboutInput) => {
   setIsSaving(true);
