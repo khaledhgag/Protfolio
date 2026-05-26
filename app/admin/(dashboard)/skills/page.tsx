@@ -102,32 +102,42 @@ export default function SkillsPage() {
     toast.success("Skill removed");
   };
 
- const saveSkills = async () => {
-  setIsSaving(true);
+  const saveSkills = async () => {
+    setIsSaving(true);
 
-  try {
-    const res = await fetch("/api/skills", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(skills),
-    });
+    try {
+      // Convert from category-based structure to flat array
+      const skillsArray = Object.entries(skills).flatMap(
+        ([category, categorySkills]) =>
+          categorySkills.map((skill, order) => ({
+            ...skill,
+            category,
+            order,
+          }))
+      );
 
-    const result = await res.json();
+      const res = await fetch("/api/skills", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ skills: skillsArray }),
+      });
 
-    if (!res.ok) {
-      throw new Error(result.error || "Failed to save skills");
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || "Failed to save skills");
+      }
+
+      toast.success("Skills saved successfully!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save skills");
+    } finally {
+      setIsSaving(false);
     }
-
-    toast.success("Skills saved successfully!");
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to save skills");
-  } finally {
-    setIsSaving(false);
-  }
-};
+  };
 
   return (
     <div className="space-y-6">

@@ -17,7 +17,8 @@ import {
 import { cn } from "@/lib/utils";
 
 interface Project {
-  id: string;
+  _id?: string;
+  id?: string;
   title: string;
   description: string;
   longDescription?: string;

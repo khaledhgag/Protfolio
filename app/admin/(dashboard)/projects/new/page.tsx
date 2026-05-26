@@ -111,11 +111,11 @@ const onSubmit = async (data: ProjectInput) => {
       },
       body: JSON.stringify({
         title: data.title,
-        shortDescription: data.description, // مهم
+        description: data.description,
         longDescription: data.longDescription,
         category: data.category,
-        technologies: techStack, // مهم
-        screenshots: images, // لو API مستني screenshots
+        techStack: data.techStack,
+        images: data.images,
         githubUrl: data.githubUrl,
         liveUrl: data.liveUrl,
         featured: data.featured,
@@ -124,8 +124,6 @@ const onSubmit = async (data: ProjectInput) => {
     });
 
     const result = await res.json();
-
-    console.log(result); // شوف بيرجع ايه
 
     if (!res.ok) {
       throw new Error(result.error || "Failed to create project");
@@ -136,7 +134,7 @@ const onSubmit = async (data: ProjectInput) => {
     router.refresh();
   } catch (error) {
     console.error(error);
-    toast.error("Failed to create project");
+    toast.error(error instanceof Error ? error.message : "Failed to create project");
   } finally {
     setIsSubmitting(false);
   }

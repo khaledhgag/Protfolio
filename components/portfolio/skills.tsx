@@ -1,73 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SectionHeading } from "./section-heading";
 import { SkillBar } from "./skill-bar";
 import { cn } from "@/lib/utils";
 
-const skillCategories = [
-  {
-    id: "frontend",
-    name: "Frontend",
-    skills: [
-      { name: "HTML5 / CSS3", percentage: 95 },
-      { name: "JavaScript (ES6+)", percentage: 90 },
-      { name: "TypeScript", percentage: 85 },
-      { name: "React.js", percentage: 90 },
-      { name: "Next.js", percentage: 85 },
-      { name: "Tailwind CSS", percentage: 90 },
-      { name: "Redux / Zustand", percentage: 80 },
-    ],
-  },
-  {
-    id: "backend",
-    name: "Backend",
-    skills: [
-      { name: "Node.js", percentage: 85 },
-      { name: "Express.js", percentage: 85 },
-      { name: "NestJS", percentage: 75 },
-      { name: "Python", percentage: 70 },
-      { name: "RESTful APIs", percentage: 90 },
-      { name: "GraphQL", percentage: 70 },
-    ],
-  },
-  {
-    id: "database",
-    name: "Database",
-    skills: [
-      { name: "MongoDB", percentage: 85 },
-      { name: "PostgreSQL", percentage: 80 },
-      { name: "MySQL", percentage: 80 },
-      { name: "Redis", percentage: 70 },
-      { name: "Prisma ORM", percentage: 75 },
-    ],
-  },
-  {
-    id: "devops",
-    name: "DevOps",
-    skills: [
-      { name: "Git / GitHub", percentage: 90 },
-      { name: "Docker", percentage: 75 },
-      { name: "AWS Basics", percentage: 65 },
-      { name: "Vercel / Netlify", percentage: 85 },
-      { name: "CI/CD", percentage: 70 },
-    ],
-  },
-  {
-    id: "data",
-    name: "Data & AI",
-    skills: [
-      { name: "Data Analysis", percentage: 70 },
-      { name: "Machine Learning Basics", percentage: 60 },
-      { name: "Pandas / NumPy", percentage: 65 },
-      { name: "Data Visualization", percentage: 70 },
-    ],
-  },
-];
+interface Skill {
+  _id: string;
+  name: string;
+  percentage: number;
+  category: "frontend" | "backend" | "database" | "devops" | "data" | "other";
+  icon?: string;
+  order: number;
+}
+
+interface SkillCategory {
+  id: string;
+  name: string;
+  skills: Skill[];
+}
 
 export function Skills() {
+  const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([]);
   const [activeCategory, setActiveCategory] = useState("frontend");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSkills();
+  }, []);
+
+  const fetchSkills = async () => {
+    try {
+      const res = await fetch("/api/skills");
+      const data: Skill[] = await res.json();
+
+      const categorized = [
+        { id: "frontend", name: "Frontend" },
+        { id: "backend", name: "Backend" },
+        { id: "database", name: "Database" },
+        { id: "devops", name: "DevOps" },
+        { id: "data", name: "Data & AI" },
+      ].map((cat) => ({
+        ...cat,
+        skills: data.filter((skill) => skill.category === cat.id),
+      }));
+
+      setSkillCategories(categorized);
+    } catch (error) {
+      console.error("Error fetching skills:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const currentCategory = skillCategories.find(
     (cat) => cat.id === activeCategory
@@ -125,54 +110,28 @@ export function Skills() {
           >
             <div className="rounded-2xl glass p-8">
               <div className="space-y-6">
-                {currentCategory?.skills.map((skill, index) => (
-                  <SkillBar
-                    key={skill.name}
-                    name={skill.name}
-                    percentage={skill.percentage}
-                    delay={index * 0.05}
-                  />
-                ))}
+                {isLoading ? (
+                  <div className="py-8 text-center text-muted-foreground">
+                    Loading skills...
+                  </div>
+                ) : currentCategory?.skills && currentCategory.skills.length > 0 ? (
+                  currentCategory.skills.map((skill, index) => (
+                    <SkillBar
+                      key={skill._id}
+                      name={skill.name}
+                      percentage={skill.percentage}
+                      delay={index * 0.05}
+                    />
+                  ))
+                ) : (
+                  <div className="py-8 text-center text-muted-foreground">
+                    No skills in this category yet
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
         </AnimatePresence>
-
-        {/* Additional Skills */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-          className="mt-12 text-center"
-        >
-          <h3 className="mb-6 text-lg font-semibold">Other Technologies</h3>
-          <div className="flex flex-wrap justify-center gap-3">
-            {[
-              "Figma",
-              "Jest",
-              "Cypress",
-              "Socket.io",
-              "Stripe",
-              "Firebase",
-              "Supabase",
-              "Linux",
-              "Agile/Scrum",
-            ].map((skill, index) => (
-              <motion.span
-                key={skill}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.1, y: -2 }}
-                className="rounded-lg border border-border bg-card px-4 py-2 text-sm transition-colors hover:border-primary/50"
-              >
-                {skill}
-              </motion.span>
-            ))}
-          </div>
-        </motion.div>
       </div>
     </section>
   );

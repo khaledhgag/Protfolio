@@ -1,8 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
+import clientPromise from "@/lib/mongodb";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -17,39 +16,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        await dbConnect();
+        try {
+          const client = await clientPromise;
+          const db = client.db();
 
-        // 🔥 DEBUG LOGS START
-        console.log("🔥 AUTH START");
-        console.log("EMAIL INPUT:", credentials?.email);
-        console.log("PASSWORD INPUT:", credentials?.password);
-        // 🔥 DEBUG LOGS END
+          const user = await db.collection("users").findOne({ 
+            email: credentials.email 
+          });
 
-        const user = await User.findOne({ email: credentials.email });
+          if (!user) {
+            return null;
+          }
 
-        console.log("USER FOUND:", user);
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password as string,
+            user.password
+          );
 
-        if (!user) {
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+            role: user.role || "user",
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
           return null;
         }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
-
-        console.log("PASSWORD MATCH:", isPasswordValid);
-
-        if (!isPasswordValid) {
-          return null;
-        }
-
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
       },
     }),
   ],

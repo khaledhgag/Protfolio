@@ -1,18 +1,68 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Code, Briefcase, MapPin } from "lucide-react";
+import { Calendar, Code, Briefcase } from "lucide-react";
 import Image from "next/image";
 import { SectionHeading } from "./section-heading";
 import { StatsCard } from "./stats-card";
 
-const stats = [
-  { value: "2+", label: "Years Learning", icon: <Calendar className="size-5" /> },
-  { value: "10+", label: "Projects Completed", icon: <Briefcase className="size-5" /> },
-  { value: "15+", label: "Technologies", icon: <Code className="size-5" /> },
-];
+interface AboutData {
+  bio: string;
+  shortBio?: string;
+  profileImage?: string;
+  yearsLearning: number;
+  projectsCompleted: number;
+  technologiesUsed: number;
+  location?: string;
+}
 
 export function About() {
+  const [aboutData, setAboutData] = useState<AboutData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAbout();
+  }, []);
+
+  const fetchAbout = async () => {
+    try {
+      const res = await fetch("/api/about");
+      const data = await res.json();
+      setAboutData(data);
+    } catch (error) {
+      console.error("Error fetching about:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const defaultStats = [
+    { value: "2+", label: "Years Learning", icon: <Calendar className="size-5" /> },
+    { value: "10+", label: "Projects Completed", icon: <Briefcase className="size-5" /> },
+    { value: "15+", label: "Technologies", icon: <Code className="size-5" /> },
+  ];
+
+  const stats = aboutData
+    ? [
+        {
+          value: `${aboutData.yearsLearning}+`,
+          label: "Years Learning",
+          icon: <Calendar className="size-5" />,
+        },
+        {
+          value: `${aboutData.projectsCompleted}+`,
+          label: "Projects Completed",
+          icon: <Briefcase className="size-5" />,
+        },
+        {
+          value: `${aboutData.technologiesUsed}+`,
+          label: "Technologies",
+          icon: <Code className="size-5" />,
+        },
+      ]
+    : defaultStats;
+
   return (
     <section id="about" className="relative py-24">
       {/* Background Elements */}
@@ -39,13 +89,13 @@ export function About() {
               {/* Decorative border */}
               <div className="absolute -inset-4 rounded-2xl border-2 border-primary/20" />
               <div className="absolute -inset-2 rounded-2xl border border-primary/40" />
-              
+
               {/* Image container */}
               <div className="relative overflow-hidden rounded-xl">
                 <div className="aspect-square w-full max-w-md bg-gradient-to-br from-primary/20 via-purple-500/20 to-blue-500/20">
                   <Image
-                    src="/images/profile-placeholder.jpg"
-                    alt="Khaled Abuelenein"
+                    src={aboutData?.profileImage || "/images/profile-placeholder.jpg"}
+                    alt="Profile"
                     width={400}
                     height={400}
                     className="size-full object-cover mix-blend-overlay"
@@ -64,8 +114,9 @@ export function About() {
                 transition={{ delay: 0.3 }}
               >
                 <div className="flex items-center gap-2">
-                  <MapPin className="size-4 text-primary" />
-                  <span className="text-sm font-medium">Cairo, Egypt</span>
+                  <span className="text-sm font-medium">
+                    {aboutData?.location || "Cairo, Egypt"}
+                  </span>
                 </div>
               </motion.div>
             </div>
@@ -84,23 +135,24 @@ export function About() {
                 Hello! I&apos;m{" "}
                 <span className="gradient-text">Khaled Abuelenein</span>
               </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                A passionate Full Stack Developer with a strong foundation in
-                modern web technologies. My journey in software development
-                started with curiosity and has evolved into a deep commitment to
-                creating impactful digital solutions.
-              </p>
-              <p className="text-muted-foreground leading-relaxed">
-                I specialize in building responsive, user-friendly applications
-                using React, Next.js, Node.js, and various database technologies.
-                I&apos;m constantly learning and exploring new technologies to
-                stay at the forefront of web development.
-              </p>
-              <p className="text-muted-foreground leading-relaxed">
-                When I&apos;m not coding, you can find me exploring new tech
-                trends, contributing to open-source projects, or working on
-                personal projects that challenge my skills.
-              </p>
+              {isLoading ? (
+                <div className="space-y-2 py-4">
+                  <div className="h-4 w-full rounded bg-muted" />
+                  <div className="h-4 w-5/6 rounded bg-muted" />
+                </div>
+              ) : (
+                <>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {aboutData?.bio ||
+                      "A passionate Full Stack Developer with a strong foundation in modern web technologies."}
+                  </p>
+                  {aboutData?.shortBio && (
+                    <p className="text-muted-foreground leading-relaxed">
+                      {aboutData.shortBio}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Tech interests */}

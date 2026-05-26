@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -8,74 +8,52 @@ import { SectionHeading } from "./section-heading";
 import { ProjectCard } from "./project-card";
 import { cn } from "@/lib/utils";
 
-// Sample projects - these would come from the database in production
-const sampleProjects = [
-  {
-    id: "1",
-    title: "E-Commerce Platform",
-    description:
-      "A full-stack e-commerce solution with cart, checkout, and payment integration using Stripe.",
-    longDescription:
-      "Built a comprehensive e-commerce platform featuring product catalog management, user authentication, shopping cart functionality, and secure checkout with Stripe integration. Includes admin dashboard for inventory management and order tracking.",
-    images: ["/images/project-1.jpg"],
-    techStack: ["Next.js", "TypeScript", "Node.js", "MongoDB", "Stripe", "Tailwind CSS"],
-    category: "web",
-    githubUrl: "https://github.com/khaledabuelenein/ecommerce",
-    liveUrl: "https://ecommerce-demo.vercel.app",
-    featured: true,
-  },
-  {
-    id: "2",
-    title: "Pharmacy Management System",
-    description:
-      "Healthcare inventory and prescription management system with real-time stock tracking.",
-    longDescription:
-      "Developed a pharmacy management system to streamline medication inventory, prescription tracking, and sales management. Features include automated low-stock alerts, expiry date tracking, and customer management.",
-    images: ["/images/project-2.jpg"],
-    techStack: ["React", "Express.js", "PostgreSQL", "Redis", "Chart.js"],
-    category: "web",
-    githubUrl: "https://github.com/khaledabuelenein/pharmacy-system",
-    featured: true,
-  },
-  {
-    id: "3",
-    title: "Shipping & Logistics System",
-    description:
-      "Track shipments, manage deliveries, and optimize logistics operations in real-time.",
-    longDescription:
-      "A comprehensive shipping management platform that handles shipment tracking, route optimization, delivery scheduling, and real-time notifications. Includes driver management and analytics dashboard.",
-    images: ["/images/project-3.jpg"],
-    techStack: ["Next.js", "NestJS", "MongoDB", "Socket.io", "Google Maps API"],
-    category: "web",
-    githubUrl: "https://github.com/khaledabuelenein/shipping-system",
-    liveUrl: "https://shipping-demo.vercel.app",
-  },
-  {
-    id: "4",
-    title: "Law Firm Management",
-    description:
-      "Case management system for law firms with document handling and client portal.",
-    longDescription:
-      "Built a legal practice management solution featuring case tracking, document management, billing, client communication portal, and court date reminders. Includes role-based access control for security.",
-    images: ["/images/project-4.jpg"],
-    techStack: ["React", "Node.js", "MySQL", "AWS S3", "DocuSign API"],
-    category: "web",
-    githubUrl: "https://github.com/khaledabuelenein/law-firm-system",
-  },
-];
+interface Project {
+  _id: string;
+  title: string;
+  description: string;
+  longDescription?: string;
+  images: string[];
+  techStack: string[];
+  category: "web" | "mobile" | "desktop" | "api" | "other";
+  githubUrl?: string;
+  liveUrl?: string;
+  featured: boolean;
+  published: boolean;
+  createdAt: string;
+}
 
 const categories = [
   { id: "all", name: "All Projects" },
   { id: "web", name: "Web Apps" },
   { id: "mobile", name: "Mobile" },
+  { id: "desktop", name: "Desktop" },
   { id: "api", name: "APIs" },
 ];
 
 export function Projects() {
+  const [projects, setProjects] = useState<Project[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredProjects = sampleProjects.filter((project) => {
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch("/api/projects?published=true");
+      const data = await res.json();
+      setProjects(data);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredProjects = projects.filter((project) => {
     const matchesCategory =
       activeCategory === "all" || project.category === activeCategory;
     const matchesSearch =
@@ -153,24 +131,21 @@ export function Projects() {
             transition={{ duration: 0.3 }}
             className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
           >
-            {filteredProjects.map((project, index) => (
-              <ProjectCard key={project.id} project={project} index={index} />
-            ))}
+            {isLoading ? (
+              <div className="col-span-full py-16 text-center text-muted-foreground">
+                Loading projects...
+              </div>
+            ) : filteredProjects.length > 0 ? (
+              filteredProjects.map((project, index) => (
+                <ProjectCard key={project._id} project={project} index={index} />
+              ))
+            ) : (
+              <div className="col-span-full py-16 text-center text-muted-foreground">
+                No projects found matching your criteria.
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
-
-        {/* No Results */}
-        {filteredProjects.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="py-16 text-center"
-          >
-            <p className="text-muted-foreground">
-              No projects found matching your criteria.
-            </p>
-          </motion.div>
-        )}
       </div>
     </section>
   );
