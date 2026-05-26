@@ -19,7 +19,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         await dbConnect();
 
+        // 🔥 DEBUG LOGS START
+        console.log("🔥 AUTH START");
+        console.log("EMAIL INPUT:", credentials?.email);
+        console.log("PASSWORD INPUT:", credentials?.password);
+        // 🔥 DEBUG LOGS END
+
         const user = await User.findOne({ email: credentials.email });
+
+        console.log("USER FOUND:", user);
 
         if (!user) {
           return null;
@@ -29,6 +37,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           credentials.password as string,
           user.password
         );
+
+        console.log("PASSWORD MATCH:", isPasswordValid);
 
         if (!isPasswordValid) {
           return null;
@@ -43,6 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -51,6 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
         session.user.role = token.role as string;
@@ -59,9 +71,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
+
   pages: {
     signIn: "/admin/login",
   },
+
   session: {
     strategy: "jwt",
   },
