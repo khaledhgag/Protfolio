@@ -8,7 +8,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { loginSchema, type LoginInput } from "@/lib/validations";
 
 export default function AdminLoginPage() {
@@ -36,13 +42,25 @@ export default function AdminLoginPage() {
         redirect: false,
       });
 
-      if (result?.error) {
-        setError("Invalid email or password");
-      } else {
-        router.push("/admin");
-        router.refresh();
+      // 🔥 DEBUG (مهم جدًا لو حصل مشكلة تاني)
+      console.log("LOGIN RESULT:", result);
+      console.log("ERROR:", result?.error);
+      console.log("OK:", result?.ok);
+
+      if (!result) {
+        setError("Something went wrong");
+        return;
       }
-    } catch {
+
+      if (result.error) {
+        setError("Invalid email or password");
+        return;
+      }
+
+      router.push("/admin");
+      router.refresh();
+    } catch (err) {
+      console.log("LOGIN CATCH ERROR:", err);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -67,6 +85,7 @@ export default function AdminLoginPage() {
             Enter your credentials to access the dashboard
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {error && (
@@ -76,43 +95,37 @@ export default function AdminLoginPage() {
             )}
 
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
+              <label className="text-sm font-medium">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  id="email"
                   type="email"
                   placeholder="admin@example.com"
                   className="pl-10"
                   {...register("email")}
-                  aria-invalid={!!errors.email}
                 />
               </div>
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
-              </label>
+              <label className="text-sm font-medium">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder="Enter password"
                   className="pl-10 pr-10"
                   {...register("password")}
-                  aria-invalid={!!errors.password}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 >
                   {showPassword ? (
                     <EyeOff className="size-4" />
@@ -122,7 +135,9 @@ export default function AdminLoginPage() {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -137,8 +152,6 @@ export default function AdminLoginPage() {
               )}
             </Button>
           </form>
-
-          
         </CardContent>
       </Card>
     </div>
