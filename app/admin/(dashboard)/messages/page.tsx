@@ -71,8 +71,12 @@ export default function MessagesPage() {
 
   const toggleRead = async (id: string) => {
     try {
-      await fetch(`/api/messages/${id}`, {
-        method: "PUT",
+      await fetch(`/api/messages?id=${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ read: true }),
       });
 
       setMessages((prev) =>
@@ -94,7 +98,7 @@ export default function MessagesPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      await fetch(`/api/messages/${id}`, {
+      await fetch(`/api/messages?id=${id}`, {
         method: "DELETE",
       });
 

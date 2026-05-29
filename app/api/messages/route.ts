@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
 import { auth } from "@/lib/auth";
 
+// GET all messages (requires auth)
 export async function GET() {
   try {
     const session = await auth();
@@ -29,6 +30,39 @@ export async function GET() {
   }
 }
 
+// POST create new message (public - for contact form)
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    
+    const client = await clientPromise;
+    const db = client.db();
+
+    const message = {
+      name: body.name,
+      email: body.email,
+      subject: body.subject,
+      message: body.message,
+      read: false,
+      createdAt: new Date(),
+    };
+
+    const result = await db.collection("messages").insertOne(message);
+
+    return NextResponse.json(
+      { success: true, id: result.insertedId },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Error creating message:", error);
+    return NextResponse.json(
+      { error: "Failed to send message" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE message (protected)
 export async function DELETE(request: Request) {
   try {
     const session = await auth();
@@ -67,6 +101,7 @@ export async function DELETE(request: Request) {
   }
 }
 
+// PATCH update message (protected)
 export async function PATCH(request: Request) {
   try {
     const session = await auth();

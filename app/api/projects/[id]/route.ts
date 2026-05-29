@@ -84,6 +84,52 @@ export async function PUT(
   }
 }
 
+// PATCH update project partially (protected)
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
+
+    const body = await request.json();
+
+    const client = await clientPromise;
+    const db = client.db();
+
+    const result = await db.collection("projects").updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          ...body,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error updating project:", error);
+    return NextResponse.json(
+      { error: "Failed to update project" },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE project (protected)
 export async function DELETE(
   request: Request,
