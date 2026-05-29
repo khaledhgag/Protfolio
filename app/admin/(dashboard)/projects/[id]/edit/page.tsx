@@ -109,6 +109,18 @@ export default function EditProjectPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size must be less than 10MB");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("folder", "projects");
@@ -119,15 +131,24 @@ export default function EditProjectPage() {
         body: formData,
       });
       const data = await res.json();
-      if (data.url) {
-        const newImages = [...images, data.url];
-        setImages(newImages);
-        setValue("images", newImages);
-        toast.success("Image uploaded");
+      
+      if (!res.ok) {
+        const errorMsg = data.error || "Failed to upload image";
+        throw new Error(errorMsg);
       }
+      
+      if (!data.url) {
+        throw new Error("No URL returned from server");
+      }
+      
+      const newImages = [...images, data.url];
+      setImages(newImages);
+      setValue("images", newImages);
+      toast.success("Image uploaded");
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Failed to upload image";
       console.error("Upload error:", error);
-      toast.error("Failed to upload image");
+      toast.error(errorMsg);
     }
   };
 

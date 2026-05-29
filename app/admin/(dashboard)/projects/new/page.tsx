@@ -87,31 +87,64 @@ export default function NewProjectPage() {
 
   try {
     const uploadedUrls: string[] = [];
+    const errors: string[] = [];
 
     for (const file of Array.from(files)) {
-      const formData = new FormData();
-      formData.append("file", file);
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        errors.push(`${file.name} is not an image`);
+        continue;
+      }
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      // Validate file size (10MB max per file)
+      if (file.size > 10 * 1024 * 1024) {
+        errors.push(`${file.name} is too large (max 10MB)`);
+        continue;
+      }
 
-      const data = await res.json();
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("folder", "projects");
 
-      if (data.url) {
-        uploadedUrls.push(data.url);
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          const errorMsg = data.error || `Failed to upload ${file.name}`;
+          errors.push(errorMsg);
+          console.error(`Upload error for ${file.name}:`, errorMsg);
+          continue;
+        }
+
+        if (data.url) {
+          uploadedUrls.push(data.url);
+        }
+      } catch (fileError) {
+        const errorMsg = fileError instanceof Error ? fileError.message : "Upload error";
+        errors.push(`${file.name}: ${errorMsg}`);
+        console.error(`Upload error for ${file.name}:`, fileError);
       }
     }
 
-    const updatedImages = [...images, ...uploadedUrls];
-    setImages(updatedImages);
-    setValue("images", updatedImages);
+    if (uploadedUrls.length > 0) {
+      const updatedImages = [...images, ...uploadedUrls];
+      setImages(updatedImages);
+      setValue("images", updatedImages);
+      toast.success(`${uploadedUrls.length} image(s) uploaded successfully`);
+    }
 
-    toast.success("Images uploaded successfully");
+    if (errors.length > 0) {
+      toast.error(errors.join("\n"));
+    }
   } catch (error) {
-    console.error(error);
-    toast.error("Upload failed");
+    const errorMsg = error instanceof Error ? error.message : "Upload failed";
+    console.error("Upload error:", error);
+    toast.error(errorMsg);
   }
 };
 

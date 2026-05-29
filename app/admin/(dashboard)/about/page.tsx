@@ -52,6 +52,18 @@ const handleImageUpload = async (
   const file = e.target.files?.[0];
   if (!file) return;
 
+  // Validate file type
+  if (!file.type.startsWith("image/")) {
+    toast.error("Please select an image file");
+    return;
+  }
+
+  // Validate file size (5MB max)
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error("Image size must be less than 5MB");
+    return;
+  }
+
   try {
     const formData = new FormData();
     formData.append("file", file);
@@ -65,15 +77,21 @@ const handleImageUpload = async (
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.error);
+      const errorMsg = data.error || "Upload failed";
+      console.error("Upload error:", errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    if (!data.url) {
+      throw new Error("No URL returned from server");
     }
 
     setProfileImage(data.url);
-
     toast.success("Profile image uploaded successfully");
   } catch (error) {
-    console.error(error);
-    toast.error("Upload failed");
+    const errorMsg = error instanceof Error ? error.message : "Upload failed";
+    console.error("Upload error:", error);
+    toast.error(errorMsg);
   }
 };
 
